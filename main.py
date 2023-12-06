@@ -1,7 +1,4 @@
 from flask import Flask, render_template, flash, request, redirect, url_for, session
-from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired
 from flask_sqlalchemy import SQLAlchemy
 from flask import jsonify
 
@@ -44,6 +41,11 @@ def profile():
         return redirect(url_for('home'))
 
 
+@app.route('/reset_password')
+def reset_password():
+    return render_template('forget_password.html')
+
+
 @app.route('/logout')
 def logout():
     session.pop('user_name', None)
@@ -52,7 +54,7 @@ def logout():
     return redirect(url_for('home'))
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['POST'])
 def login():
     if request.method == 'POST':
         data = request.json
@@ -65,18 +67,21 @@ def login():
             session['user_name'] = user.name
             session['email'] = user.email
 
-            return jsonify({'success': True})
+            # Set the user information in cookies
+            resp = jsonify({'success': True})
+            resp.set_cookie('user_name', user.name)
+            resp.set_cookie('user_email', user.email)
+            return resp
         else:
             return jsonify({'success': False, 'error': 'Invalid email or password'})
     else:
-        # Handle other HTTP methods if needed
         return redirect(url_for('home'))
 
 
 @app.route('/register',  methods=['POST'])
 def register():
     if request.method == 'POST':
-        data = request.json  # Access JSON data using request.json
+        data = request.json
         name = data.get('name')
         email = data.get('email')
         password = data.get('password')
@@ -94,13 +99,14 @@ def register():
             session['user_name'] = name
             session['email'] = email
 
-            # Return success flag
-            return jsonify({'success': True})
+            # Set the user information in cookies
+            resp = jsonify({'success': True})
+            resp.set_cookie('user_name', name)
+            resp.set_cookie('user_email', email)
+            return resp
         except Exception as e:
-            # Handle the exception and return failure flag
             return jsonify({'success': False, 'error': str(e)})
     else:
-        # Handle other HTTP methods if needed
         return redirect(url_for('home'))
 
 
