@@ -2,21 +2,17 @@ from flask import Flask, render_template, flash, request, redirect, url_for, ses
 from flask_sqlalchemy import SQLAlchemy
 from flask import jsonify
 import config
-
 from itsdangerous import URLSafeTimedSerializer
-from flask_mail import Mail, Message
-
 from flask_migrate import Migrate
-from sqlalchemy import text
-
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = config.SECRET_KEY
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://admin:Taha.Asif@localhost/flask_blog_project'
+app.config['SQLALCHEMY_DATABASE_URI'] = config.database_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Turn off Flask-SQLAlchemy event tracking
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -25,16 +21,6 @@ migrate = Migrate(app, db)
 MAIL_USERNAME = config.MAIL_USERNAME
 MAIL_PASSWORD = config.MAIL_PASSWORD
 
-
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 26
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_USERNAME'] = MAIL_USERNAME
-app.config['MAIL_PASSWORD'] = MAIL_PASSWORD
-
-
-mail = Mail(app)
 
 # Initialize the serializer with your app's secret key
 serializer = URLSafeTimedSerializer(app.secret_key)
@@ -73,7 +59,9 @@ def forgot_password():
         data = request.json
         email = data.get('email')
 
-        token = serializer.dumps(email, salt='forgot-password')
+        expiration_time = datetime.utcnow() + timedelta(minutes=1)
+        token_data = {'email': email, 'exp': expiration_time.timestamp()}
+        token = serializer.dumps(token_data, salt='forgot-password')
         print(f'Token for {email}: {token}')
 
         subject = 'Password Reset Request'
@@ -86,12 +74,12 @@ def forgot_password():
 
         # Set the email subject and recipients
         msg['Subject'] = subject
-        msg['From'] = MAIL_USERNAME  # Replace with your email address
+        msg['From'] = MAIL_USERNAME
         msg['To'] = email
 
         # Use your SMTP server to send the email
         try:
-            server = smtplib.SMTP('mail.tecspine.com', 26)
+            server = smtplib.SMTP(config.smtp_domain, config.smtp_port)
             server.starttls()
             server.login(MAIL_USERNAME, MAIL_PASSWORD)  # Replace with your email and password
 
@@ -110,7 +98,16 @@ def forgot_password():
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     try:
-        email = serializer.loads(token, salt='forgot-password', max_age=3600)
+        token_data = serializer.loads(token, salt='forgot-password', max_age=3600)
+        email = token_data.get('email')
+        expiration_time = datetime.fromtimestamp(token_data.get('exp'))
+
+        if datetime.utcnow() > expiration_time:
+            flash('The password reset link has expired. Please request a new one.', 'danger')
+            return redirect(url_for('home'))
+
+        # email = serializer.loads(token, salt='forgot-password', max_age=3600)
+        # expiration_time = datetime.fromtimestamp(token_data.get('exp'))
     except Exception as e:
         print(e)
         flash('Invalid or expired token. Please try again.', 'danger')
@@ -136,8 +133,6 @@ def update_reset_password():
         else:
             flash('Password not updated')
             return jsonify({'success': False, 'error': 'Password Not updated'}), 401
-
-
 
 
 @app.route('/logout')
