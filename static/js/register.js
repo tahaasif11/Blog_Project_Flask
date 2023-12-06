@@ -9,16 +9,94 @@ $(document).ready(function () {
 	initializeDateRangePicker();
 });
 
+$(document).ready(function () {
+    $('#password_reset_modal').modal('show');
+});
+
+
+function resetPasswordFunction() {
+    var Email = document.getElementById('user_email').value;
+    var newPassword = document.getElementById('resetPassword').value;
+    var confirmPassword = document.getElementById('confirmPassword').value;
+
+    if (newPassword !== confirmPassword) {
+        alert('Passwords do not match. Please check and try again.');
+        return;
+    }
+
+    var UserData = {
+    email: Email,
+    password: newPassword,
+	};
+     fetch('/update_reset_password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(UserData),
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+.then(data => {
+  if (data.success) {
+    console.log('update password  successful');
+    window.location.href = '/';
+  } else {
+    console.error('update password failed:', data.error);
+    window.location.href = '/';
+  }
+})
+  .catch(error => {
+    console.error('Error:', error);
+  });
+}
+
 var forgetPasswordLink = document.getElementById("forgetPasswordLink");
 
 forgetPasswordLink.addEventListener("click", function () {
     $("#login_modal").modal("hide");
     $("#email_modal").modal("show");
-//    var emailModal = new bootstrap.Modal(document.getElementById('email_modal'));
-//    emailModal.show();
 });
 
+function sendEmailFunction()
+{
+    var Email = document.getElementById("sendEmail").value;
 
+    var UserData = {
+    email: Email,
+	};
+
+     fetch('/forgot_password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(UserData),
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+.then(data => {
+  if (data.success) {
+    console.log('email sent successful');
+    window.location.href = '/';
+  } else {
+    console.error('email sent failed:', data.error);
+    window.location.href = '/';
+  }
+})
+  .catch(error => {
+    console.error('Error:', error);
+  });
+
+}
 function initializeDateRangePicker() {
 	$(".birthday").daterangepicker(
 		{
@@ -33,13 +111,6 @@ function initializeDateRangePicker() {
 		}
 	);
 }
-
-function openRegisterModal() {
-    // Trigger the modal opening
-    var myModal = new bootstrap.Modal(document.getElementById('staticBackdrop'));
-    myModal.show();
-}
-
 
 function saveUserData() {
 	var Name = document.getElementById("Name").value;
