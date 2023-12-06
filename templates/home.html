@@ -1,0 +1,43 @@
+{% extends 'base.html'%}
+
+{% block content%}
+
+{% for message in get_flashed_messages() %}
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+    <strong>{{message}}</strong>
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+{% endfor %}
+
+<div class="container mt-5">
+  <h1 class="mb-4">Blog Post Project</h1>
+
+  <div class="row">
+    <div class="col-md-8">
+      <!-- Featured Blog Post -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <h1 class="card-title">Featured Blog Post Title</h1>
+          <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit....</p>
+          <a href="#" class="btn btn-primary">Read More</a>
+        </div>
+      </div>
+
+      <!-- Add more blog posts as needed -->
+    </div>
+
+    <div class="col-md-4">
+      <!-- Sidebar -->
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">About the This Website</h5>
+          <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit....</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

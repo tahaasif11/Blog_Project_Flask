@@ -1,0 +1,81 @@
+<!-- Modal -->
+<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false"
+     aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel">Register User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body fixed-modal-body">
+                <form id="studentForm">
+                    <div class="form-group">
+                        <label for="Name">Name:</label>
+                        <input
+                                type="text"
+                                class="form-control"
+                                id="Name"
+                                placeholder="Enter name"
+                                required
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="Email">Email:</label>
+                        <input
+                                type="email"
+                                class="form-control"
+                                id="Email"
+                                placeholder="Enter email"
+                                required
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="Password">Password:</label>
+                        <input
+                                type="password"
+                                class="form-control"
+                                id="Password"
+                                placeholder="Enter password"
+                                required
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="birthday">Birthday:</label>
+                        <input
+                                type="text"
+                                class="form-control birthday"
+                                id="birthday"
+                                placeholder="Select birthday"
+                                required
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="age">Age:</label>
+                        <input type="text" class="form-control" id="age" readonly/>
+                    </div>
+                    <!-- Add more fields as needed -->
+
+                    <div class="form-group">
+                        <label for="text_editor">Description:</label>
+                        <textarea
+                                id="text_editor"
+                                name="text_editor"
+                                class="form-control"
+                        ></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button
+                        type="button"
+                        id="saveChangesBtn"
+                        class="btn btn-primary"
+                        onclick="saveUserData()"
+                >
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
