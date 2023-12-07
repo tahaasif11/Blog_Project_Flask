@@ -199,6 +199,84 @@ def register():
         return redirect(url_for('home'))
 
 
+@app.route('/get_all_data',  methods=['GET','POST'])
+def get_all_data():
+    if request.method == 'GET':
+        all_users = Users.query.all()
+        users_list = []
+        for user in all_users:
+            user_data = {
+                'id': user.id,
+                'name': user.name,
+                'email': user.email,
+                'password': user.password,
+                'birthday': user.birthday,
+                'age': user.age,
+                'description': user.description,
+            }
+            users_list.append(user_data)
+            response = {
+                'success': True,
+                'message': 'User data retrieved successfully',
+                'users_data': users_list
+            }
+        return jsonify(response)
+
+
+@app.route('/get_one_data',  methods=['POST'])
+def get_one_data():
+    if request.method == 'POST':
+        id = request.json.get('id')
+        user = Users.query.filter_by(id=id).first()
+        user_data = {
+            'id': user.id,
+            'name': user.name,
+            'email': user.email,
+            'password': user.password,
+            'birthday': user.birthday,
+            'age': user.age,
+            'description': user.description,
+        }
+        response = {
+            'success': True,
+            'message': 'User data retrieved successfully',
+            'users_data': user_data
+        }
+        return jsonify(response)
+
+
+@app.route('/update_user', methods=['POST'])
+def update_user():
+    if request.method == 'POST':
+        data = request.json
+        id = data.get('id')
+        name = data.get('name')
+        email = data.get('email')
+        password = data.get('password')
+        birthday = data.get('birthday')
+        age = data.get('age')
+        description = data.get('description')
+
+        try:
+            user_to_update = Users.query.get(id)
+            user_to_update.name = name
+            user_to_update.email = email
+            user_to_update.password = password
+            user_to_update.birthday = birthday
+            user_to_update.age = age
+            user_to_update.description = description
+
+            db.session.commit()
+
+            resp = jsonify({'success': True})
+            return resp
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)})
+    else:
+        return redirect(url_for('home'))
+
+
+
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template("error_404.html")

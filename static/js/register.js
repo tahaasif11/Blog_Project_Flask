@@ -5,8 +5,18 @@ document.addEventListener("DOMContentLoaded", function () {
 	});
 });
 
+function ckeditor(id)
+{
+	CKEDITOR.replace(id, {
+		height: "100px",
+		// width: "500px", // Adjust the height value
+	});
+}
+
 $(document).ready(function () {
 	initializeDateRangePicker();
+	getUserData()
+
 });
 
 $(document).ready(function () {
@@ -148,6 +158,7 @@ function saveUserData() {
   if (data.success) {
     console.log('Registration successful');
     window.location.href = '/profile';
+//    loadStudentData();
   } else {
     console.error('Registration failed:', data.error);
     window.location.href = '/home';
@@ -208,4 +219,195 @@ function LogInUser() {
 function getCookie(name) {
     const cookieValue = document.cookie.match('(^|[^;]+)\\s*' + name + '\\s*=\\s*([^;]+)');
     return cookieValue ? cookieValue.pop() : '';
+}
+
+function getUserData() {
+
+ fetch('/get_all_data', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+    .then(data => {
+  if (data.success) {
+    console.log('get data successful');
+    users = data.users_data
+
+    loadUserData(users)
+  } else {
+    console.error('get data failed:', data.error);
+    window.location.href = '/home';
+  }
+})
+  .catch(error => {
+    console.error('Error:', error);
+  });
+
+}
+
+function loadUserData(users) {
+  var tableBody = $("#userDataTable tbody");
+  tableBody.empty();
+
+  for (var i = 0; i < users.length; i++) {
+    var user = users[i];
+    var newRow = $("<tr>");
+
+    newRow.append(`<td><input type='text' class='form-control' id='nameInput${user.id}' value='${user.name}'></td>`);
+    newRow.append(`<td><input type='email' class='form-control' id='emailInput${user.id}' value='${user.email}'></td>`);
+    newRow.append(`<td><input type='password' class='form-control' id='passwordInput${user.id}' value='${user.password}'></td>`);
+    newRow.append(`<td><input type='text' class='form-control birthday' id='birthdayInput${user.id}' placeholder='Select birthday' required value='${user.birthday}'></td>`);
+    newRow.append("<td>" + user.age + "</td>");
+    newRow.append("<td >" + user.description + "</td>");
+//    newRow.append(`<td><input type='text' class='form-control text_editor' id='text_editor${user.id}' value='${user.description}'></td>`);
+
+    newRow.append(
+      `<td><button class='btn btn-success' onclick='saveEdit(${user.id},${false})'>Save</button></td>`
+    );
+    newRow.append(
+      `<td><button class='btn btn-primary' onclick='editStudentData(${user.id})'>Edit</button></td>`
+    );
+
+    tableBody.append(newRow);
+    initializeDateRangePicker();
+//    ckeditor(`text_editor${user.id}`);
+  }
+}
+
+async  function editStudentData(user_id) {
+
+     try {
+        const user = await get_one_User(user_id);
+
+        document.getElementById("Name").value = user.name;
+        document.getElementById("birthday").value = user.birthday;
+        document.getElementById("age").value = user.age;
+        document.getElementById("Password").value = user.password;
+        document.getElementById("Email").value = user.email;
+        CKEDITOR.instances.text_editor.setData(user.description);
+        $("#staticBackdrop").modal("show");
+
+        document.getElementById("saverUserChangesBtn").onclick = function () {
+            saveEdit(user_id, true);
+        };
+    } catch (error) {
+        console.error('Error fetching user data:', error);
+    }
+}
+
+
+async function saveEdit(user_id, flag) {
+	$("#staticBackdrop").modal("hide");
+	var UserData;
+        if (flag)
+        {
+        var Name = document.getElementById("Name").value;
+        var Birthday = document.getElementById("birthday").value;
+        var Age = document.getElementById("age").value;
+        var Email = document.getElementById("Email").value;
+        var Password = document.getElementById("Password").value;
+        const Description = CKEDITOR.instances.text_editor.getData();
+         UserData = {
+            id:user_id,
+            name: Name,
+            email: Email,
+            password: Password,
+            birthday: Birthday,
+            age: Age,
+            description: Description,
+            };
+        }
+         else
+        {
+            const user = await get_one_User(user_id);
+
+            var Name = document.getElementById(`nameInput${user_id}`).value;
+            var Email = document.getElementById(`emailInput${user_id}`).value;
+            var Birthday = document.getElementById(`birthdayInput${user_id}`).value;
+            var newage = moment().diff(Birthday, "years");
+            var Description = user.description;
+            var Password = document.getElementById(`passwordInput${user_id}`).value;
+
+            UserData = {
+            id:user_id,
+            name: Name,
+            email: Email,
+            password: Password,
+            birthday: Birthday,
+            age: newage,
+            description: Description,
+            };
+
+        }
+        update_user(UserData);
+//        getUserData();
+
+}
+
+async function get_one_User(user_id) {
+  try {
+    const UserData = { id: user_id };
+
+    const response = await fetch('/get_one_data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(UserData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    const data = await response.json();
+
+    if (data.success) {
+      console.log('Get data successful');
+      const user = data.users_data;
+      return user
+
+    } else {
+      console.error('Get data failed:', data.error);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    // Handle other errors that might occur during the process
+  }
+}
+
+function update_user(UserData)
+{
+	 fetch('/update_user', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(UserData),
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+.then(data => {
+  if (data.success) {
+    console.log('updated successful');
+    window.location.href = '/';
+  } else {
+    console.error('updated failed:', data.error);
+    window.location.href = '/';
+  }
+})
+  .catch(error => {
+    console.error('Error:', error);
+  });
 }
